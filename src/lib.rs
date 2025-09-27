@@ -1,5 +1,6 @@
 use regex::Regex;
 use std::collections::HashMap;
+use std::process::Command;
 
 use arboard::Clipboard;
 use git2::{DiffFormat, Repository, Status, StatusOptions};
@@ -90,6 +91,17 @@ fn copy_to_clipboard(content: &str) -> Result<(), Box<dyn std::error::Error>> {
 pub fn clip_commit_prompt(chinese: bool) -> Result<(), Box<dyn std::error::Error>> {
     let prompt = get_commit_prompt(chinese)?;
     copy_to_clipboard(&prompt)?;
+    Ok(())
+}
+
+pub fn add_commit_push(commit_msg: String) -> Result<(), Box<dyn std::error::Error>> {
+    Command::new("git").arg("add").arg(".").output()?;
+    Command::new("git")
+        .arg("commit")
+        .arg("-m")
+        .arg(commit_msg)
+        .output()?;
+    Command::new("git").arg("push").output()?;
     Ok(())
 }
 
