@@ -17,6 +17,7 @@ enum Command {
     Push {
         message: String,
     },
+    Ls,
 }
 fn main() {
     let cli = Cli::parse();
@@ -30,6 +31,9 @@ fn main() {
             println!("Committing and pushing changes...");
             add_commit_push(message).unwrap();
             println!("Changes committed and pushed.");
+        }
+        Command::Ls => {
+            println!("Listing files is not implemented yet.");
         }
     }
 }
