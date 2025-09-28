@@ -94,14 +94,13 @@ pub fn clip_commit_prompt(chinese: bool) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-pub fn add_commit_push(commit_msg: String) -> Result<(), Box<dyn std::error::Error>> {
+pub fn add_commit(commit_msg: String) -> Result<(), Box<dyn std::error::Error>> {
     Command::new("git").arg("add").arg(".").output()?;
     Command::new("git")
         .arg("commit")
         .arg("-m")
         .arg(commit_msg)
         .output()?;
-    Command::new("git").arg("push").output()?;
     Ok(())
 }
 
