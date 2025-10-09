@@ -82,15 +82,20 @@ Only provide the commit message without any additional commentary or explanation
     Ok(format!("{}\n\nChanges:\n{}", prompt, change_str))
 }
 
-fn copy_to_clipboard(content: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut clipboard = Clipboard::new()?;
-    clipboard.set_text(content.to_string())?;
+fn clip_or_print(content: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // let mut clipboard = Clipboard::new()?;
+    if let Ok(mut clipboard) = Clipboard::new() {
+        clipboard.set_text(content.to_string())?;
+    } else {
+        println!("Clipboard not available, print prompt instead:");
+        println!("{}", content);
+    }
     Ok(())
 }
 
 pub fn clip_commit_prompt(chinese: bool) -> Result<(), Box<dyn std::error::Error>> {
     let prompt = get_commit_prompt(chinese)?;
-    copy_to_clipboard(&prompt)?;
+    clip_or_print(&prompt)?;
     Ok(())
 }
 
