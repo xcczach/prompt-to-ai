@@ -1,0 +1,7 @@
+# SII CLI - Ignore all files and folders
+  # This ensures that conversation records and temporary files won't be committed to Git repository
+  # This .gitignore file itself won't be committed either, keeping everything clean
+
+  # Ignore all files and folders
+  *
+  

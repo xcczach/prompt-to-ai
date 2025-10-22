@@ -1,0 +1,61 @@
+You are an AI assistant that creates commit messages.
+Given the following changes in a git repository, provide a concise summary of what has been changed, added, or removed. Focus on the overall purpose and impact of the changes rather than line-by-line details.
+Choose one of the following types for the commit message:
+feature: <A brief description of the feature added or modified>
+fix: <A brief description of the bug fixed>
+refactor: <A brief description of the code refactored>
+docs: <A brief description of the documentation updated>
+chore: <A brief description of the maintenance task performed>
+
+Only provide the commit message without any additional commentary or explanation. Strictly follow the format: <type>: <description>. If multiple types apply, choose the most significant one.
+Please respond in Chinese for the body of commit messages.
+
+
+Changes:
+Add .sii/conversation_logs/readable_1d6b0093-baa3-4f08-855b-66eeecd76e5c_training.json
+
+Modify src/lib.rs
+H @@ -9,6 +9,8 @@ use std::io::Write;
+  use std::path::{Path, PathBuf};
+  use git2::{DiffFormat, Repository, Status, StatusOptions};
+  
++ const COMMIT_PROMPT_FILE: &str = ".commit_prompt.txt";
++ 
+  fn get_change_str() -> Result<String, Box<dyn std::error::Error>> {
+      let repo = Repository::open(".")?;
+      let mut opts = StatusOptions::new();
+H @@ -91,11 +93,12 @@ fn clip_or_print(content: &str) -> Result<(), Box<dyn std::error::Error>> {
+          clipboard.set_text(content.to_string())?;
+          println!("Commit prompt copied to clipboard.");
+      } else {
+-         let path = Path::new(".commit_prompt.txt");
++         let path = Path::new(COMMIT_PROMPT_FILE);
+          let mut file = File::create(path)?;
+          file.write_all(content.as_bytes())?;
+          println!(
+-             "Clipboard not available; commit prompt saved to .commit_prompt.txt"
++             "Clipboard not available; commit prompt saved to {}",
++             COMMIT_PROMPT_FILE
+          );
+          // Auto-register a cleaner so the file is deleted on exit
+          register_prompt_cleaner();
+H @@ -117,7 +120,7 @@ pub fn add_commit(commit_msg: String) -> Result<(), Box<dyn std::error::Error>> 
+          .arg(commit_msg)
+          .output()?;
+      // Best-effort cleanup of temporary prompt file after commit
+-     let _ = fs::remove_file(".commit_prompt.txt");
++     let _ = fs::remove_file(COMMIT_PROMPT_FILE);
+      Ok(())
+  }
+  
+H @@ -132,7 +135,7 @@ impl Drop for TempPromptCleaner {
+  
+  // Create a cleaner for the default prompt file path
+  pub fn temp_prompt_cleaner() -> TempPromptCleaner {
+-     TempPromptCleaner(PathBuf::from(".commit_prompt.txt"))
++     TempPromptCleaner(PathBuf::from(COMMIT_PROMPT_FILE))
+  }
+  
+  thread_local! {
+
+Add .sii/.gitignore

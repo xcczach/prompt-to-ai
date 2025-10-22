@@ -9,6 +9,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use git2::{DiffFormat, Repository, Status, StatusOptions};
 
+const COMMIT_PROMPT_FILE: &str = ".commit_prompt.txt";
+
 fn get_change_str() -> Result<String, Box<dyn std::error::Error>> {
     let repo = Repository::open(".")?;
     let mut opts = StatusOptions::new();
@@ -91,11 +93,12 @@ fn clip_or_print(content: &str) -> Result<(), Box<dyn std::error::Error>> {
         clipboard.set_text(content.to_string())?;
         println!("Commit prompt copied to clipboard.");
     } else {
-        let path = Path::new(".commit_prompt.txt");
+        let path = Path::new(COMMIT_PROMPT_FILE);
         let mut file = File::create(path)?;
         file.write_all(content.as_bytes())?;
         println!(
-            "Clipboard not available; commit prompt saved to .commit_prompt.txt"
+            "Clipboard not available; commit prompt saved to {}",
+            COMMIT_PROMPT_FILE
         );
         // Auto-register a cleaner so the file is deleted on exit
         register_prompt_cleaner();
@@ -117,7 +120,7 @@ pub fn add_commit(commit_msg: String) -> Result<(), Box<dyn std::error::Error>> 
         .arg(commit_msg)
         .output()?;
     // Best-effort cleanup of temporary prompt file after commit
-    let _ = fs::remove_file(".commit_prompt.txt");
+    let _ = fs::remove_file(COMMIT_PROMPT_FILE);
     Ok(())
 }
 
@@ -132,7 +135,7 @@ impl Drop for TempPromptCleaner {
 
 // Create a cleaner for the default prompt file path
 pub fn temp_prompt_cleaner() -> TempPromptCleaner {
-    TempPromptCleaner(PathBuf::from(".commit_prompt.txt"))
+    TempPromptCleaner(PathBuf::from(COMMIT_PROMPT_FILE))
 }
 
 thread_local! {
