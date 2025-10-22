@@ -86,6 +86,7 @@ fn clip_or_print(content: &str) -> Result<(), Box<dyn std::error::Error>> {
     // let mut clipboard = Clipboard::new()?;
     if let Ok(mut clipboard) = Clipboard::new() {
         clipboard.set_text(content.to_string())?;
+        println!("Commit prompt copied to clipboard.");
     } else {
         println!("Clipboard not available, print prompt instead:");
         println!("{}", content);

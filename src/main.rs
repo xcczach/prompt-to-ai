@@ -21,7 +21,6 @@ fn main() {
     match cli.command {
         Command::Commit { use_english } => {
             clip_commit_prompt(!use_english).unwrap();
-            println!("Commit prompt copied to clipboard.");
             // Prompt user to enter commit message
             println!("Please enter commit message:");
             let mut commit_msg = String::new();
