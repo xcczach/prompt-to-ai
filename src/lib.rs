@@ -3,6 +3,10 @@ use std::collections::HashMap;
 use std::process::Command;
 
 use arboard::Clipboard;
+use std::cell::RefCell;
+use std::fs::{self, File};
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use git2::{DiffFormat, Repository, Status, StatusOptions};
 
 fn get_change_str() -> Result<String, Box<dyn std::error::Error>> {
@@ -83,13 +87,18 @@ Only provide the commit message without any additional commentary or explanation
 }
 
 fn clip_or_print(content: &str) -> Result<(), Box<dyn std::error::Error>> {
-    // let mut clipboard = Clipboard::new()?;
     if let Ok(mut clipboard) = Clipboard::new() {
         clipboard.set_text(content.to_string())?;
         println!("Commit prompt copied to clipboard.");
     } else {
-        println!("Clipboard not available, print prompt instead:");
-        println!("{}", content);
+        let path = Path::new(".commit_prompt.txt");
+        let mut file = File::create(path)?;
+        file.write_all(content.as_bytes())?;
+        println!(
+            "Clipboard not available; commit prompt saved to .commit_prompt.txt"
+        );
+        // Auto-register a cleaner so the file is deleted on exit
+        register_prompt_cleaner();
     }
     Ok(())
 }
@@ -107,7 +116,35 @@ pub fn add_commit(commit_msg: String) -> Result<(), Box<dyn std::error::Error>> 
         .arg("-m")
         .arg(commit_msg)
         .output()?;
+    // Best-effort cleanup of temporary prompt file after commit
+    let _ = fs::remove_file(".commit_prompt.txt");
     Ok(())
+}
+
+// RAII guard to clean up the temporary commit prompt file on drop
+pub struct TempPromptCleaner(PathBuf);
+
+impl Drop for TempPromptCleaner {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.0);
+    }
+}
+
+// Create a cleaner for the default prompt file path
+pub fn temp_prompt_cleaner() -> TempPromptCleaner {
+    TempPromptCleaner(PathBuf::from(".commit_prompt.txt"))
+}
+
+thread_local! {
+    static PROMPT_CLEANER: RefCell<Option<TempPromptCleaner>> = RefCell::new(None);
+}
+
+fn register_prompt_cleaner() {
+    PROMPT_CLEANER.with(|cell| {
+        if cell.borrow().is_none() {
+            cell.replace(Some(temp_prompt_cleaner()));
+        }
+    });
 }
 
 #[cfg(test)]
